@@ -88,7 +88,7 @@ export connectIdmWallet(createMapWalletToProps)(App);
 
 The `<IdmWalletProvider>` makes a IDM Wallet available to any nested components that have been wrapped in the `connectIdmWallet()` function.
 
-Since any React component in an app can be connected, most applications will render a <IdmWalletProvider> at the top level, with the entire app's component tree inside of it. You can't use a connected component unless it is nested inside of a `<IdmWalletProvider>`.
+Since any React component in an app can be connected, most applications will render a `<IdmWalletProvider>` at the top level, with the entire app's component tree inside of it. You can't use a connected component unless it is nested inside of a `<IdmWalletProvider>`.
 
 #### Props
 
