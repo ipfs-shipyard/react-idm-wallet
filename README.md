@@ -66,19 +66,23 @@ const App = ({ locked, onLock }) => (
     </div>
 );
 
-const mapWalletToProps = (idmWallet) => ({
-    locked: idmWallet.locker.isLocked(),
-    onLock: () => idmWallet.locker.lock(),
-});
+const createMapWalletToProps = (idmWallet) => {
+    const onLocked = () => idmWallet.locker.lock();
 
-export connectIdmWallet(mapWalletToProps)(App);
+    return () => {
+        locked: idmWallet.locker.isLocked(),
+        onLock,
+    });
+};
+
+export connectIdmWallet(createMapWalletToProps)(App);
 ```
 
 
 ## API
 
 - [`<IdmWalletProvider>`](#idmwalletprovider)
-- [`connectIdmWallet(mapWalletToProps, [options])`](#connectidmwalletmapwallettoprops-options)
+- [`connectIdmWallet(createMapWalletToProps, [options])`](#connectidmwalletcreatemapwallettoprops-options)
 
 ### IdmWalletProvider
 
@@ -100,31 +104,43 @@ Type: `Node` (any React's node)
 
 Any valid React node to render as the children.
 
-### connectIdmWallet(mapWalletToProps, [options])
+### connectIdmWallet(createMapWalletToProps, [options])
 
 The `connectIdmWallet()` function connects a React component to a IDM Wallet instance, by providing the connected component with the pieces of the data and functions it needs from the IDM Wallet.
 
 It does not modify the component class passed to it; instead, it returns a new, connected component that wraps the component you passed in. Moreover, any ref will be automatically forwarded to the component you passed in.
 
-#### mapWalletToProps
+#### createMapWalletToProps
 
 Type: `function`
 
-A function that maps any data or mutators from a IDM Wallet to props that will be passed to the wrapped component.
-This function will be called with two arguments: the IDM wallet instance and the wrapper component props:
+A factory that creates a function that maps any data or mutators from a IDM Wallet to props that will be passed to the wrapped component. **From now on**, we will call the factory and the returned function **`createMapWalletToProps`** and **`mapWalletToProps`** respectively.
 
 ```js
-const mapWalletToProps = (idmWallet, ownProps) => ({});
+const createMapWalletToProps = (idmWallet) => (ownProps) => ({});
 ```
 
-If your `mapWalletToProps` function is declared as taking two parameters, it will be called whenever any data on the IDM Wallet changes or when the wrapper component receives new props (based on shallow equality comparisons). On the other hand, if the function is declared as just taking one parameter, it will be called only whenever any data on the IDM Wallet changes.
+Your `createMapWalletToProps` will be called once per `idmWallet` instance, which usually does not change.
 
-Be sure to preserve the context correctly (`this`) when mapping a mutator:
+If your `mapWalletToProps` function is declared with `ownProps`, it will be called whenever any data on the IDM Wallet changes or when the wrapper component receives new props (based on shallow equality comparisons). On the other hand, if the function is declared without any parameter, it will be called only whenever any data on the IDM Wallet changes.
+
+All calls to mutators of the `idmWallet` must be bound, so that the correct `this` is used. This means that you will often wrap mutators in functions to keep them bounded. For that reason, it's **important to declare them in the factory** to avoid creating new functions everytime `mapWalletToProps` runs, thus avoiding unwanted re-renders:
 
 ```js
-const mapWalletToProps = (idmWallet, ownProps) => ({
-    onLock: idmWallet.locker.lock, // Incorrect
-    onLock: () => idmWallet.locker.lock(), // Correct
+// ❌ Incorrect: `onLock` prop will be new everytime
+const createMapWalletToProps = (idmWallet) => (ownProps) => ({
+    locked: idmWallet.locker.isLocked(),
+    onLock: () => idmWallet.locker.lock(),
+});
+
+// ✅ Correct: `onLock` prop will have the same reference everytime
+const createMapWalletToProps = (idmWallet) => {
+    onLock = () => idmWallet.locker.lock();
+
+    return (ownProps) => {
+        locked: idmWallet.locker.isLocked(),
+        onLock,
+    };
 });
 ```
 

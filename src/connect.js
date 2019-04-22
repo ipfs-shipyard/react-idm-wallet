@@ -11,30 +11,12 @@ const propsMapperEquatityFn = ([newOwnProps, newChangeId], [oldOwnProps, oldChan
 const propsMapperOptimizedEquatityFn = ([, newChangeId], [, oldChangeId]) =>
     newChangeId === oldChangeId;
 
-const createPropsMapper = (mapWalletToProps, idmWallet, ownProps, options) => {
-    // Call `mapWalletToProps` to see if it's a factory
-    let mappedProps = mapWalletToProps(idmWallet, ownProps);
+const createPropsMapper = (createMapWalletToProps, idmWallet, options) => {
+    const mapWalletToProps = createMapWalletToProps(idmWallet);
 
-    if (typeof mappedProps === 'function') {
-        mapWalletToProps = mappedProps;
-        mappedProps = mapWalletToProps(idmWallet, ownProps);
-    }
-
-    // Construct `propsMapper` which is a "proxy" to `mapWalletToProps` except that
-    // it returns the already resolved `mappedProps` in its first invocation
-    let calledOnce = false;
-    const propsMapper = (ownProps) => {
-        if (!calledOnce) {
-            const mappedProps_ = mappedProps;
-
-            calledOnce = true;
-            mappedProps = undefined;
-
-            return mappedProps_;
-        }
-
-        return mapWalletToProps(idmWallet, ownProps);
-    };
+    // Construct `propsMapper` which is a proxy to `actualMapWalletToProps` that doesn't leak
+    // the second argument named `changeId`
+    const propsMapper = (ownProps) => mapWalletToProps(ownProps);
 
     if (!options.pure) {
         return propsMapper;
@@ -42,13 +24,13 @@ const createPropsMapper = (mapWalletToProps, idmWallet, ownProps, options) => {
 
     // When pure, return a memoized version of `propsMapper`
     // Note that we further optimize when `mapWalletToProps` does not depend on `ownProps`
-    const dependsOnOwnProps = mapWalletToProps.length >= 2;
+    const dependsOnOwnProps = mapWalletToProps.length > 0;
     const equalityFn = dependsOnOwnProps ? propsMapperEquatityFn : propsMapperOptimizedEquatityFn;
 
     return memoizeOne(propsMapper, equalityFn);
 };
 
-const createConnectComponent = (mapWalletToProps, WrappedComponent, options) => {
+const createConnectComponent = (createMapWalletToProps, WrappedComponent, options) => {
     // Memoize `WrappedComponent` when pure, avoiding any re-render if its own props or mapped props are the same
     if (options.pure) {
         WrappedComponent = memo(WrappedComponent);
@@ -75,7 +57,7 @@ const createConnectComponent = (mapWalletToProps, WrappedComponent, options) => 
         // The returned function has memoization when pure, avoiding unnecessary calls to `mapWalletToProps`
         // Note that this operation needs to run again only on scenario A
         const propsMapper = useMemo(
-            () => createPropsMapper(mapWalletToProps, idmWallet, ownProps, options),
+            () => createPropsMapper(createMapWalletToProps, idmWallet, options),
             [idmWallet]
         );
 
@@ -101,7 +83,7 @@ const createConnectComponent = (mapWalletToProps, WrappedComponent, options) => 
     });
 };
 
-const connectIdmWallet = (mapWalletToProps, options) => {
+const connectIdmWallet = (createMapWalletToProps, options) => {
     options = {
         pure: true,
         ...options,
@@ -109,7 +91,7 @@ const connectIdmWallet = (mapWalletToProps, options) => {
 
     return (WrappedComponent) => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
-        const Connect = createConnectComponent(mapWalletToProps, WrappedComponent, options);
+        const Connect = createConnectComponent(createMapWalletToProps, WrappedComponent, options);
 
         // Make sure we apply HOC best-pratices
         Connect.WrappedComponent = WrappedComponent;
