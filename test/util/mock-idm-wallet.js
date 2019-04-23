@@ -3,12 +3,6 @@ import pDelay from 'delay';
 const createLocker = () => {
     const locksMap = new Map();
 
-    const idleTimer = {
-        getMaxTime: () => {},
-        setMaxTime: () => {},
-        restart: () => {},
-    };
-
     const getLock = (lockType) => {
         if (!locksMap.has(lockType)) {
             locksMap.set(lockType, {
@@ -21,10 +15,14 @@ const createLocker = () => {
     };
 
     return {
-        getIdleTimer: () => idleTimer,
-        getMasterLock: () => getLock('passphrase'),
+        idleTimer: {
+            getMaxTime: () => {},
+            setMaxTime: () => {},
+            restart: () => {},
+        },
+        masterLock: getLock('passphrase'),
         getLock,
-        onLockedChange: jest.fn(() => {}),
+        onLockedChange: jest.fn(() => () => {}),
     };
 };
 

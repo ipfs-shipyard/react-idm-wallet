@@ -43,11 +43,11 @@ const createConnectComponent = (createMapWalletToProps, WrappedComponent, option
     // - D) if `ref` changes
     return forwardRef((ownProps, ref) => {
         // Grab the IdmWalletContext value
-        const contextValue = useContext(IdmWalletContext);
+        const providerValue = useContext(IdmWalletContext);
 
-        invariant(contextValue, 'Unable to grab IdmWalletContext value. Did you forget to use <IdmWalletProvider> component?');
+        invariant(providerValue, 'Unable to grab IdmWalletContext value. Did you forget to use <IdmWalletProvider> component?');
 
-        const { idmWallet, subscribe } = contextValue;
+        const { idmWallet, observable } = providerValue;
 
         // Create a counter that will be used to force the component to update whenever
         // the reactive `idmWallet` triggers a change
@@ -69,13 +69,13 @@ const createConnectComponent = (createMapWalletToProps, WrappedComponent, option
         // Subcribe to the reactive `idmWallet` changes in order to update the component
         // Note that this operation needs to run again only on scenario A
         useEffect(() => {
-            const cleanup = subscribe(() => {
+            const unsubscribe = observable.subscribe(() => {
                 setChangeId((id) => id >= 10000 ? 0 : id + 1);
             });
 
             // Be sure to unsubscribe when unmounting
-            return cleanup;
-        }, [subscribe]);
+            return unsubscribe;
+        }, [observable]);
 
         // Render `WrappedComponent` with all correct props
         // Note that this is a memoized component when pure

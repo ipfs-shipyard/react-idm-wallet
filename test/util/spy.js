@@ -23,20 +23,13 @@ export const spiedForwardRef = (Component) => {
 };
 
 export const spyOnCreateMapWalletToProps = (createMapWalletToProps) => {
-    const mapWalletToPropsFns = [];
-
-    const spiedCreateMapWalletToProps = jest.fn((idmWallet) => {
-        const mapWalletToProps = jest.fn(createMapWalletToProps(idmWallet));
-
-        mapWalletToPropsFns.push(mapWalletToProps);
-
-        return mapWalletToProps;
-    });
+    const spiedCreateMapWalletToProps = jest.fn((idmWallet) => jest.fn(createMapWalletToProps(idmWallet)));
+    const results = spiedCreateMapWalletToProps.mock.results;
 
     spiedCreateMapWalletToProps.get = (index) => {
-        assert(mapWalletToPropsFns[index], `Could not find created mapWalletToProps at index ${index}`);
+        assert(results[index], `Could not find created mapWalletToProps at index ${index}`);
 
-        return mapWalletToPropsFns[index];
+        return results[index].value;
     };
 
     return spiedCreateMapWalletToProps;

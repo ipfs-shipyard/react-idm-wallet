@@ -201,13 +201,13 @@ it('should behave correctly when idmWallet reports a change', async () => {
         let maxTime = 2000;
         const idmWallet = createMockIdmWallet();
 
-        idmWallet.locker.getIdleTimer().getMaxTime = () => maxTime;
-        idmWallet.locker.getIdleTimer().setMaxTime = (value) => { maxTime = value; };
+        idmWallet.locker.idleTimer.getMaxTime = () => maxTime;
+        idmWallet.locker.idleTimer.setMaxTime = (value) => { maxTime = value; };
 
         return idmWallet;
     })();
     const createMapWalletToProps = spyOnCreateMapWalletToProps((idmWallet) => () => ({
-        maxTime: idmWallet.locker.getIdleTimer().getMaxTime(),
+        maxTime: idmWallet.locker.idleTimer.getMaxTime(),
     }));
 
     const MyComponent = jest.fn(() => <p>foo</p>);
@@ -220,7 +220,7 @@ it('should behave correctly when idmWallet reports a change', async () => {
     );
 
     // Trigger mutation
-    idmWallet.locker.getIdleTimer().setMaxTime(9999);
+    idmWallet.locker.idleTimer.setMaxTime(9999);
 
     await pDelay(THROTTLE_WAIT_TIME);
 
@@ -239,11 +239,11 @@ it('should behave correctly when idmWallet instance changes', () => {
     const idmWallet1 = createMockIdmWallet();
     const idmWallet2 = createMockIdmWallet();
 
-    idmWallet1.locker.getIdleTimer().getMaxTime = () => 2000;
-    idmWallet2.locker.getIdleTimer().getMaxTime = () => 5000;
+    idmWallet1.locker.idleTimer.getMaxTime = () => 2000;
+    idmWallet2.locker.idleTimer.getMaxTime = () => 5000;
 
     const createMapWalletToProps = spyOnCreateMapWalletToProps((idmWallet) => () => ({
-        maxTime: idmWallet.locker.getIdleTimer().getMaxTime(),
+        maxTime: idmWallet.locker.idleTimer.getMaxTime(),
     }));
 
     const MyComponent = jest.fn(() => <p>foo</p>);
@@ -300,7 +300,7 @@ it('should behave correctly when mapped props change', async () => {
     );
 
     // Trigger mutation
-    idmWallet.locker.getIdleTimer().setMaxTime(9999);
+    idmWallet.locker.idleTimer.setMaxTime(9999);
 
     await pDelay(THROTTLE_WAIT_TIME);
 
@@ -410,7 +410,7 @@ it('should unsubscribe on unmount', async () => {
     unmount();
 
     // Trigger mutation
-    idmWallet.locker.getIdleTimer().setMaxTime(9999);
+    idmWallet.locker.idleTimer.setMaxTime(9999);
 
     await pDelay(THROTTLE_WAIT_TIME);
 
