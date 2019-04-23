@@ -33,23 +33,25 @@ This library is written in modern JavaScript and is published in both CommonJS a
 First, wrap your application in `<IdmWalletProvider>`:
 
 ```js
-import React from 'react';
+import React, { Fragment } from 'react';
 import ReactDOM from 'react-dom';
 import createIdmWallet from 'idm-wallet';
 import { IdmWalletProvider } from 'react-idm-wallet';
+import App from './App';
 
-createIdmWallet()
-.then(renderApp)
-.catch((err) => console.error(err));
-
-const renderApp = (idmWallet) => {
-    ReactDOM.render(
-        <IdmWalletProvider idmWallet={ idmWallet }>
-            <App />
-        </IdmWalletProvider>,
-        document.getElementById('root')
-    );
-};
+// We are using async mode in this example, read more below
+ReactDOM.render(
+    <IdmWalletProvider createIdmWallet={ createIdmWallet }>
+        { ({ status, error }) => (
+            <Fragment>
+            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
+            { status === 'loading' && <div>Creating wallet...</div> }
+            { status === 'ok' && <App /> }
+            </Fragment>
+        ) }
+    </IdmWalletProvider>,,
+    document.getElementById('root')
+);
 ```
 
 Then, you may use `connectIdmWallet` to connect a component to a IDM Wallet:
@@ -91,19 +93,90 @@ The `<IdmWalletProvider>` makes a IDM Wallet available to any nested components 
 
 Since any React component in an app can be connected, most applications will render a `<IdmWalletProvider>` at the top level, with the entire app's component tree inside of it. You can't use a connected component unless it is nested inside of a `<IdmWalletProvider>`.
 
+### Modes
+
+There are two modes of operation: **sync** and **async**. The sync mode assumes that you take care of creating the IDM Wallet instance, which is an asynchronous operation, while the async mode does that for you.
+
+**Sync mode:**
+
+```js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import createIdmWallet from 'idm-wallet';
+import { IdmWalletProvider } from 'react-idm-wallet';
+import App from './App';
+
+const renderApp = (idmWallet) => {
+    ReactDOM.render(
+        <IdmWalletProvider idmWallet={ idmWallet }>
+            <App />
+        </IdmWalletProvider>,
+        document.getElementById('root')
+    );
+};
+
+createIdmWallet()
+.then(renderApp)
+.catch((err) => console.error(err));
+```
+
+**Async mode:**
+
+```js
+import React, { Fragment } from 'react';
+import ReactDOM from 'react-dom';
+import createIdmWallet from 'idm-wallet';
+import { IdmWalletProvider } from 'react-idm-wallet';
+import App from './App';
+
+ReactDOM.render(
+    <IdmWalletProvider createIdmWallet={ createIdmWallet }>
+        { ({ status, error }) => (
+            <Fragment>
+            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
+            { status === 'loading' && <div>Creating wallet...</div> }
+            { status === 'ok' && <App /> }
+            </Fragment>
+        <App />
+    </IdmWalletProvider>,
+    document.getElementById('root')
+);
+```
+
 #### Props
 
 ##### idmWallet
 
+ℹ️ Using this property will make the provider operate in sync mode.
+
 Type: `object`
 
-The [idmWallet](https://npmjs.org/package/idm-wallet) instance to use in your app. The provider will make use of [`createIdmWalletObservable()`](#createidmwalletobservableidmwallet) to observe changes to IDM Wallet's data or state.
+The [idmWallet](https://npmjs.org/package/idm-wallet) instance to use in your app.
+Internally, [`createIdmWalletObservable()`](#createidmwalletobservableidmwallet) will be used to observe changes to IDM Wallet's data or state.
+
+##### createIdmWallet
+
+Type: `function`
+
+ℹ️ Using this property will make the provider operate in async mode.
+
+A function that returns a promise for the IDM Wallet to use in your app.
+Internally, [`createIdmWalletObservable()`](#createidmwalletobservableidmwallet) will be used to observe changes to IDM Wallet's data or state.
+
+If you want to pass options when creating the IDM wallet, you may create a custom factory and use it as the `createIdmWallet` prop:
+
+```js
+const createIdmWalletWithOptions = () => createIdmWallet({ /* Your options */ });
+
+// ...
+<IdmWalletProvider createIdmWallet={ createIdmWalletWithOptions }>
+```
 
 ##### children
 
-Type: `Node` (any React's node)
+Type: `Node` (any React's node), `Function`
 
-Any valid React node to render as the children.
+What to render as the children. A React node is expected in sync mode while a function is expected in async mode.
 
 ### connectIdmWallet(createMapWalletToProps, [options])
 
