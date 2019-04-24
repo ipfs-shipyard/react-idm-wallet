@@ -118,15 +118,26 @@ describe('locker scope', () => {
         const idmWallet = createMockIdmWallet();
         const onChange = jest.fn();
 
+        const originalSetMaxTime = idmWallet.locker.idleTimer.setMaxTime;
+        const originalGetLock = idmWallet.locker.getLock;
+        const originalEnableLock = idmWallet.locker.getLock('passphrase').enable;
+
         const cleanup = makeReactive(idmWallet, onChange);
-        const setMaxTime = idmWallet.locker.idleTimer.setMaxTime;
 
-        // Cleanup and trigger mutator
+        expect(idmWallet.locker.idleTimer.setMaxTime).not.toBe(originalSetMaxTime);
+        expect(idmWallet.locker.getLock).not.toBe(originalGetLock);
+        expect(idmWallet.locker.getLock('passphrase').enable).not.toBe(originalEnableLock);
+
         cleanup();
-        idmWallet.locker.idleTimer.setMaxTime();
-        await pDelay(THROTTLE_WAIT_TIME);
 
-        expect(idmWallet.locker.idleTimer.setMaxTime).not.toBe(setMaxTime);
+        expect(idmWallet.locker.idleTimer.setMaxTime).toBe(originalSetMaxTime);
+        expect(idmWallet.locker.getLock).toBe(originalGetLock);
+        expect(idmWallet.locker.getLock('passphrase').enable).toBe(originalEnableLock);
+
+        // Trigger mutation and check if `onChange` wasn't called
+        idmWallet.locker.idleTimer.setMaxTime();
+
+        await pDelay(THROTTLE_WAIT_TIME);
         expect(onChange).toHaveBeenCalledTimes(0);
     });
 
@@ -135,18 +146,16 @@ describe('locker scope', () => {
         const onChange = jest.fn();
 
         const cleanup = makeReactive(idmWallet, onChange);
-        const setMaxTime = idmWallet.locker.idleTimer.setMaxTime;
 
-        // Trigger mutator
         idmWallet.locker.idleTimer.setMaxTime();
         await pDelay(THROTTLE_WAIT_TIME);
 
-        // Cleanup and trigger mutator
         cleanup();
-        idmWallet.locker.idleTimer.setMaxTime();
-        await pDelay(THROTTLE_WAIT_TIME);
 
-        expect(idmWallet.locker.idleTimer.setMaxTime).not.toBe(setMaxTime);
+        // Trigger mutation and check if `onChange` wasn't called again
+        idmWallet.locker.idleTimer.setMaxTime();
+
+        await pDelay(THROTTLE_WAIT_TIME);
         expect(onChange).toHaveBeenCalledTimes(1);
     });
 });

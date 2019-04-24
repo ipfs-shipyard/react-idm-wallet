@@ -1,13 +1,11 @@
-import pDelay from 'delay';
-
 const createLocker = () => {
     const locksMap = new Map();
 
     const getLock = (lockType) => {
         if (!locksMap.has(lockType)) {
             locksMap.set(lockType, {
-                enable: () => pDelay(10),
-                disable: () => pDelay(10),
+                enable: () => Promise.resolve(),
+                disable: () => Promise.resolve(),
             });
         }
 

@@ -42,10 +42,10 @@ import App from './App';
 // We are using async mode in this example, read more below
 ReactDOM.render(
     <IdmWalletProvider createIdmWallet={ createIdmWallet }>
-        { ({ status, error }) => (
+        { (status, error) => (
             <Fragment>
-            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
             { status === 'loading' && <div>Creating wallet...</div> }
+            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
             { status === 'ok' && <App /> }
             </Fragment>
         ) }
@@ -95,7 +95,7 @@ Since any React component in an app can be connected, most applications will ren
 
 ### Modes
 
-There are two modes of operation: **sync** and **async**. The sync mode assumes that you take care of creating the IDM Wallet instance, which is an asynchronous operation, while the async mode does that for you.
+There are two modes of operation: **sync** and **async**. The sync mode assumes that you take care of creating the IDM Wallet instance, which is an asynchronous operation, while the async mode does that for you and makes it part of the rendering.
 
 **Sync mode:**
 
@@ -131,17 +131,25 @@ import App from './App';
 
 ReactDOM.render(
     <IdmWalletProvider createIdmWallet={ createIdmWallet }>
-        { ({ status, error }) => (
+        { (status, error) => (
             <Fragment>
-            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
             { status === 'loading' && <div>Creating wallet...</div> }
+            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
             { status === 'ok' && <App /> }
             </Fragment>
-        <App />
+        ) }
     </IdmWalletProvider>,
     document.getElementById('root')
 );
 ```
+
+The async mode leverages the [render props](https://reactjs.org/docs/render-props.html) technique to know what to render. The children render prop is invoked with the following signature:
+
+```js
+const render = (status, error) => ();
+```
+
+The `status` may be either `loading`, `error` or `ok`. When status is set to error, the `error` argument will contain the error object that was caught.
 
 #### Props
 

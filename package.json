@@ -71,11 +71,13 @@
     "idm-wallet": "^0.1.0"
   },
   "dependencies": {
+    "airbnb-prop-types": "^2.13.2",
     "hoist-non-react-statics": "^3.3.0",
     "invariant": "^2.2.4",
     "lodash": "^4.17.11",
     "memoize-one": "^5.0.4",
     "p-is-promise": "^2.1.0",
+    "p-try": "^2.2.0",
     "prop-types": "^15.7.2",
     "shallow-equal": "^1.1.0"
   },

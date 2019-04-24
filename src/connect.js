@@ -56,10 +56,9 @@ const createConnectComponent = (createMapWalletToProps, WrappedComponent, option
         // Create `propsMapper`: a function that takes `(ownProps, changeId)` and returns the mapped props
         // The returned function has memoization when pure, avoiding unnecessary calls to `mapWalletToProps`
         // Note that this operation needs to run again only on scenario A
-        const propsMapper = useMemo(
-            () => createPropsMapper(createMapWalletToProps, idmWallet, options),
-            [idmWallet]
-        );
+        const propsMapper = useMemo(() => (
+            createPropsMapper(createMapWalletToProps, idmWallet, options)
+        ), [idmWallet]);
 
         // Get the mapped props by running the previously resolved `propsMapper`
         // Thanks to its memoization, the underyling `mapWalletToProps` only re-runs on

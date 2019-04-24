@@ -1,12 +1,13 @@
-import React, { Component, useState, createRef, forwardRef } from 'react';
-import { render, cleanup, fireEvent } from 'react-testing-library';
+import React, { Component, createRef, forwardRef } from 'react';
+import { render, cleanup } from 'react-testing-library';
 import testRenderer from 'react-test-renderer';
 import pDelay from 'delay';
 import IdmWalletContext from '../src/context';
 import connectIdmWallet from '../src/connect';
-import { spiedConnectIdmWallet, spiedForwardRef, spyOnCreateMapWalletToProps } from './util/spy';
 import createMockIdmWallet from './util/mock-idm-wallet';
 import hideGlobalErrors from './util/hide-global-errors';
+import { spiedConnectIdmWallet, spiedForwardRef, spyOnCreateMapWalletToProps } from './util/spy';
+import createObservable from '../src/observable';
 
 const THROTTLE_WAIT_TIME = 10;
 
@@ -31,6 +32,7 @@ it('should render all the correct components', () => {
 
     expect(names).toEqual([
         'IdmWalletProvider',
+        'IdmWalletProviderSync',
         'ConnectIdmWallet(MyComponent)',
         'MyComponent',
         'p',
@@ -84,24 +86,17 @@ it('should behave correctly when props change and we depend on them', () => {
     const MyComponent = jest.fn(() => <p>foo</p>);
     const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
 
-    const MyWrapperComponent = () => {
-        const [foo, setFoo] = useState('bar');
-
-        return (
-            <div onClick={ () => setFoo('baz') }>
-                <MyConnectedComponent foo={ foo } />;
-            </div>
-        );
-    };
-
-    const { container } = render(
+    const { rerender } = render(
         <IdmWalletContext.Provider idmWallet={ idmWallet }>
-            <MyWrapperComponent />
+            <MyConnectedComponent foo="bar" />;
         </IdmWalletContext.Provider>
     );
 
-    // Trigger prop change
-    fireEvent.click(container.querySelector('div'));
+    rerender(
+        <IdmWalletContext.Provider idmWallet={ idmWallet }>
+            <MyConnectedComponent foo="baz" />
+        </IdmWalletContext.Provider>
+    );
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
     expect(createMapWalletToProps).toHaveBeenNthCalledWith(1, idmWallet);
@@ -124,24 +119,17 @@ it('should behave correctly when props change and we do not depend on them', () 
     const MyComponent = jest.fn(() => <p>foo</p>);
     const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
 
-    const MyWrapperComponent = () => {
-        const [foo, setFoo] = useState('bar');
-
-        return (
-            <div onClick={ () => setFoo('baz') }>
-                <MyConnectedComponent foo={ foo } />;
-            </div>
-        );
-    };
-
-    const { container } = render(
+    const { rerender } = render(
         <IdmWalletContext.Provider idmWallet={ idmWallet }>
-            <MyWrapperComponent />
+            <MyConnectedComponent foo="bar" />;
         </IdmWalletContext.Provider>
     );
 
-    // Trigger prop change
-    fireEvent.click(container.querySelector('div'));
+    rerender(
+        <IdmWalletContext.Provider idmWallet={ idmWallet }>
+            <MyConnectedComponent foo="baz" />
+        </IdmWalletContext.Provider>
+    );
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
     expect(createMapWalletToProps).toHaveBeenNthCalledWith(1, idmWallet);
@@ -162,24 +150,18 @@ it('should behave correctly when props do not change and we depend on them', () 
 
     const MyComponent = jest.fn(() => <p>foo</p>);
     const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
-    const MyWrapperComponent = () => {
-        const [counter, setCounter] = useState(0);
 
-        return (
-            <div onClick={ () => setCounter(counter + 1) }>
-                <MyConnectedComponent foo="bar" />;
-            </div>
-        );
-    };
-
-    const { container } = render(
+    const { rerender } = render(
         <IdmWalletContext.Provider idmWallet={ idmWallet }>
-            <MyWrapperComponent />
+            <MyConnectedComponent foo="bar" />;
         </IdmWalletContext.Provider>
     );
 
-    // Trigger prop change
-    fireEvent.click(container.querySelector('div'));
+    rerender(
+        <IdmWalletContext.Provider idmWallet={ idmWallet }>
+            <MyConnectedComponent foo="bar" />
+        </IdmWalletContext.Provider>
+    );
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
     expect(createMapWalletToProps).toHaveBeenNthCalledWith(1, idmWallet);
@@ -195,6 +177,8 @@ it('should behave correctly when props do not change and we depend on them', () 
 
 it('should behave correctly when idmWallet reports a change', async () => {
     // Hide "An update to null inside a test was not wrapped in act(...)" error
+    // This won't be needed in react-dom@^16.9.0 because `act()` will support promises
+    // See: https://github.com/facebook/react/issues/14769#issuecomment-479592338
     hideGlobalErrors();
 
     const idmWallet = (() => {
@@ -221,7 +205,6 @@ it('should behave correctly when idmWallet reports a change', async () => {
 
     // Trigger mutation
     idmWallet.locker.idleTimer.setMaxTime(9999);
-
     await pDelay(THROTTLE_WAIT_TIME);
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
@@ -249,24 +232,17 @@ it('should behave correctly when idmWallet instance changes', () => {
     const MyComponent = jest.fn(() => <p>foo</p>);
     const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
 
-    const MyProviderWrapperComponent = () => {
-        const [idmWallet, setIdmWallet] = useState(idmWallet1);
-
-        return (
-            <div onClick={ () => setIdmWallet(idmWallet2) }>
-                <IdmWalletContext.Provider idmWallet={ idmWallet }>
-                    <MyConnectedComponent />
-                </IdmWalletContext.Provider>
-            </div>
-        );
-    };
-
-    const { container } = render(
-        <MyProviderWrapperComponent />
+    const { rerender } = render(
+        <IdmWalletContext.Provider idmWallet={ idmWallet1 }>
+            <MyConnectedComponent />;
+        </IdmWalletContext.Provider>
     );
 
-    // Trigger idmWallet change
-    fireEvent.click(container.querySelector('div'));
+    rerender(
+        <IdmWalletContext.Provider idmWallet={ idmWallet2 }>
+            <MyConnectedComponent />
+        </IdmWalletContext.Provider>
+    );
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(2);
     expect(createMapWalletToProps).toHaveBeenNthCalledWith(1, idmWallet1);
@@ -284,6 +260,8 @@ it('should behave correctly when idmWallet instance changes', () => {
 
 it('should behave correctly when mapped props change', async () => {
     // Hide "An update to null inside a test was not wrapped in act(...)" error
+    // This won't be needed in react-dom@^16.9.0 because `act()` will support promises
+    // See: https://github.com/facebook/react/issues/14769#issuecomment-479592338
     hideGlobalErrors();
 
     let counter = 0;
@@ -301,7 +279,6 @@ it('should behave correctly when mapped props change', async () => {
 
     // Trigger mutation
     idmWallet.locker.idleTimer.setMaxTime(9999);
-
     await pDelay(THROTTLE_WAIT_TIME);
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
@@ -316,68 +293,56 @@ it('should behave correctly when mapped props change', async () => {
 });
 
 it('should behave correctly when ref changes', () => {
-    const ref1 = createRef();
-    const ref2 = createRef();
     const idmWallet = createMockIdmWallet();
     const createMapWalletToProps = spyOnCreateMapWalletToProps(() => () => ({ maxTime: 5000 }));
+    const ref1 = createRef();
+    const ref2 = createRef();
 
     const MyComponent = spiedForwardRef((props, ref) => <p ref={ ref }>foo</p>);
     const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
 
-    const MyProviderWrapperComponent = () => {
-        const [ref, setRef] = useState(ref1);
-
-        return (
-            <div onClick={ () => setRef(ref2) }>
-                <IdmWalletContext.Provider idmWallet={ idmWallet }>
-                    <MyConnectedComponent foo="bar" ref={ ref } />
-                </IdmWalletContext.Provider>
-            </div>
-        );
-    };
-
-    const { container } = render(
-        <MyProviderWrapperComponent />
+    const { rerender } = render(
+        <IdmWalletContext.Provider idmWallet={ idmWallet }>
+            <MyConnectedComponent ref={ ref1 } />;
+        </IdmWalletContext.Provider>
     );
 
-    // Trigger idmWallet change
-    fireEvent.click(container.querySelector('div'));
+    rerender(
+        <IdmWalletContext.Provider idmWallet={ idmWallet }>
+            <MyConnectedComponent ref={ ref2 } />
+        </IdmWalletContext.Provider>
+    );
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
     expect(createMapWalletToProps.get(0)).toHaveBeenCalledTimes(1);
 
     expect(MyConnectedComponent.render).toHaveBeenCalledTimes(2);
-    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar' }, ref1);
-    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(2, { foo: 'bar' }, ref2);
+    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(1, {}, ref1);
+    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(2, {}, ref2);
     expect(MyComponent.render).toHaveBeenCalledTimes(2);
-    expect(MyComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar', maxTime: 5000 }, ref1);
-    expect(MyComponent.render).toHaveBeenNthCalledWith(2, { foo: 'bar', maxTime: 5000 }, ref2);
+    expect(MyComponent.render).toHaveBeenNthCalledWith(1, { maxTime: 5000 }, ref1);
+    expect(MyComponent.render).toHaveBeenNthCalledWith(2, { maxTime: 5000 }, ref2);
 });
 
 it('should behave correctly when props, mapped props and ref do not change', () => {
     const idmWallet = createMockIdmWallet();
     const createMapWalletToProps = spyOnCreateMapWalletToProps(() => () => ({ maxTime: 5000 }));
+    const ref = createRef();
 
-    const MyComponent = jest.fn(() => <p>foo</p>);
+    const MyComponent = spiedForwardRef((props, ref) => <p ref={ ref }>foo</p>);
     const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
-    const MyWrapperComponent = () => {
-        const [counter, setCounter] = useState(0);
 
-        return (
-            <div onClick={ () => setCounter(counter + 1) }>
-                <MyConnectedComponent foo="bar" />;
-            </div>
-        );
-    };
-
-    const { container } = render(
+    const { rerender } = render(
         <IdmWalletContext.Provider idmWallet={ idmWallet }>
-            <MyWrapperComponent />
+            <MyConnectedComponent foo="bar" ref={ ref } />;
         </IdmWalletContext.Provider>
     );
 
-    // Trigger prop change
-    fireEvent.click(container.querySelector('div'));
+    rerender(
+        <IdmWalletContext.Provider idmWallet={ idmWallet }>
+            <MyConnectedComponent foo="bar" ref={ ref } />
+        </IdmWalletContext.Provider>
+    );
 
     expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
     expect(createMapWalletToProps).toHaveBeenNthCalledWith(1, idmWallet);
@@ -385,20 +350,25 @@ it('should behave correctly when props, mapped props and ref do not change', () 
     expect(createMapWalletToProps.get(0)).toHaveBeenNthCalledWith(1, { foo: 'bar' });
 
     expect(MyConnectedComponent.render).toHaveBeenCalledTimes(2);
-    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar' }, null);
-    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(2, { foo: 'bar' }, null);
-    expect(MyComponent).toHaveBeenCalledTimes(1);
-    expect(MyComponent).toHaveBeenNthCalledWith(1, { foo: 'bar', maxTime: 5000 }, {});
+    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar' }, ref);
+    expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(2, { foo: 'bar' }, ref);
+    expect(MyComponent.render).toHaveBeenCalledTimes(1);
+    expect(MyComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar', maxTime: 5000 }, ref);
 });
 
 it('should unsubscribe on unmount', async () => {
     // Hide "An update to null inside a test was not wrapped in act(...)" error
+    // This won't be needed in react-dom@^16.9.0 because `act()` will support promises
+    // See: https://github.com/facebook/react/issues/14769#issuecomment-479592338
     hideGlobalErrors();
 
     const idmWallet = createMockIdmWallet();
-    const createMapWalletToProps = spyOnCreateMapWalletToProps(() => () => ({ }));
+    const createMapWalletToProps = () => () => ({});
+    const observable = createObservable(idmWallet);
 
-    const MyComponent = jest.fn(() => <p>foo</p>);
+    observable.unsubscribe = jest.fn(observable.unsubscribe);
+
+    const MyComponent = () => <p>foo</p>;
     const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
 
     const { unmount } = render(
@@ -411,14 +381,41 @@ it('should unsubscribe on unmount', async () => {
 
     // Trigger mutation
     idmWallet.locker.idleTimer.setMaxTime(9999);
-
     await pDelay(THROTTLE_WAIT_TIME);
 
-    expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
-    expect(createMapWalletToProps.get(0)).toHaveBeenCalledTimes(1);
-
+    expect(observable.unsubscribe).toHaveBeenCalledTimes(1);
     expect(MyConnectedComponent.render).toHaveBeenCalledTimes(1);
-    expect(MyComponent).toHaveBeenCalledTimes(1);
+});
+
+it('should unsubscribe when idmWallet instance changes', async () => {
+    const idmWallet1 = createMockIdmWallet();
+    const idmWallet2 = createMockIdmWallet();
+    const createMapWalletToProps = () => () => ({});
+    const observable = createObservable(idmWallet1);
+
+    observable.unsubscribe = jest.fn(observable.unsubscribe);
+
+    const MyComponent = () => <p>foo</p>;
+    const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps)(MyComponent);
+
+    const { rerender } = render(
+        <IdmWalletContext.Provider idmWallet={ idmWallet1 }>
+            <MyConnectedComponent />
+        </IdmWalletContext.Provider>
+    );
+
+    rerender(
+        <IdmWalletContext.Provider idmWallet={ idmWallet2 }>
+            <MyConnectedComponent />
+        </IdmWalletContext.Provider>
+    );
+
+    // Trigger mutation
+    idmWallet1.locker.idleTimer.setMaxTime(9999);
+    await pDelay(THROTTLE_WAIT_TIME);
+
+    expect(observable.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(MyConnectedComponent.render).toHaveBeenCalledTimes(2);
 });
 
 it('should apply the correct displayName for the connect component', () => {
@@ -484,27 +481,22 @@ describe('options.pure = false', () => {
     it('should behave correctly even when props, mapped props and ref do not change', () => {
         const idmWallet = createMockIdmWallet();
         const createMapWalletToProps = spyOnCreateMapWalletToProps(() => (ownProps) => ({ maxTime: 5000 })); // eslint-disable-line no-unused-vars
+        const ref = createRef();
 
-        const MyComponent = jest.fn(() => <p>foo</p>);
+        const MyComponent = spiedForwardRef((props, ref) => <p ref={ ref }>foo</p>);
         const MyConnectedComponent = spiedConnectIdmWallet(createMapWalletToProps, { pure: false })(MyComponent);
-        const MyWrapperComponent = () => {
-            const [counter, setCounter] = useState(0);
 
-            return (
-                <div onClick={ () => setCounter(counter + 1) }>
-                    <MyConnectedComponent foo="bar" />;
-                </div>
-            );
-        };
-
-        const { container } = render(
+        const { rerender } = render(
             <IdmWalletContext.Provider idmWallet={ idmWallet }>
-                <MyWrapperComponent />
+                <MyConnectedComponent foo="bar" ref={ ref } />;
             </IdmWalletContext.Provider>
         );
 
-        // Trigger prop change
-        fireEvent.click(container.querySelector('div'));
+        rerender(
+            <IdmWalletContext.Provider idmWallet={ idmWallet }>
+                <MyConnectedComponent foo="bar" ref={ ref } />
+            </IdmWalletContext.Provider>
+        );
 
         expect(createMapWalletToProps).toHaveBeenCalledTimes(1);
         expect(createMapWalletToProps).toHaveBeenNthCalledWith(1, idmWallet);
@@ -513,10 +505,10 @@ describe('options.pure = false', () => {
         expect(createMapWalletToProps.get(0)).toHaveBeenNthCalledWith(2, { foo: 'bar' });
 
         expect(MyConnectedComponent.render).toHaveBeenCalledTimes(2);
-        expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar' }, null);
-        expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(2, { foo: 'bar' }, null);
-        expect(MyComponent).toHaveBeenCalledTimes(2);
-        expect(MyComponent).toHaveBeenNthCalledWith(1, { foo: 'bar', maxTime: 5000 }, {});
-        expect(MyComponent).toHaveBeenNthCalledWith(2, { foo: 'bar', maxTime: 5000 }, {});
+        expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar' }, ref);
+        expect(MyConnectedComponent.render).toHaveBeenNthCalledWith(2, { foo: 'bar' }, ref);
+        expect(MyComponent.render).toHaveBeenCalledTimes(2);
+        expect(MyComponent.render).toHaveBeenNthCalledWith(1, { foo: 'bar', maxTime: 5000 }, ref);
+        expect(MyComponent.render).toHaveBeenNthCalledWith(2, { foo: 'bar', maxTime: 5000 }, ref);
     });
 });
