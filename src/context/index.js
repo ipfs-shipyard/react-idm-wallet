@@ -1,6 +1,6 @@
 import React, { createContext } from 'react';
 import PropTypes from 'prop-types';
-import ExtraPropTypes from 'airbnb-prop-types';
+import invariant from 'invariant';
 import IdmWalletProviderSync from './provider-sync';
 import IdmWalletProviderAsync from './provider-async';
 
@@ -8,6 +8,11 @@ const IdmWalletContext = createContext();
 const Provider = IdmWalletContext.Provider;
 
 const IdmWalletProvider = ({ createIdmWallet, idmWallet, ...rest }) => {
+    invariant(
+        (idmWallet && !createIdmWallet) || (!idmWallet && createIdmWallet),
+        'The idmWallet and createIdmWallet props are mutually exclusive and at least one must be provided'
+    );
+
     if (idmWallet) {
         return <IdmWalletProviderSync idmWallet={ idmWallet } provider={ Provider } { ...rest } />;
     }
@@ -16,8 +21,8 @@ const IdmWalletProvider = ({ createIdmWallet, idmWallet, ...rest }) => {
 };
 
 IdmWalletProvider.propTypes = {
-    idmWallet: ExtraPropTypes.mutuallyExclusiveProps(PropTypes.object, 'createIdmWallet').isRequired,
-    createIdmWallet: ExtraPropTypes.mutuallyExclusiveProps(PropTypes.func, 'idmWallet').isRequired,
+    idmWallet: PropTypes.object,
+    createIdmWallet: PropTypes.func,
 };
 
 IdmWalletContext.Provider = IdmWalletProvider;

@@ -5,9 +5,37 @@ import IdmWalletContext from '../src/context';
 import createObservable from '../src/observable';
 import createMockIdmWallet from './util/mock-idm-wallet';
 import hideGlobalErrors from './util/hide-global-errors';
+import { IdmWalletProvider } from '../src';
 
 beforeEach(() => {
     cleanup();
+});
+
+it('should throw if both idmWallet and createIdmWallet props were provided', () => {
+    hideGlobalErrors();
+
+    expect.assertions(1);
+
+    const idmWallet = createMockIdmWallet();
+    const createIdmWallet = () => Promise.resolve(idmWallet);
+
+    try {
+        render(<IdmWalletProvider idmWallet={ idmWallet } createIdmWallet={ createIdmWallet } />);
+    } catch (err) {
+        expect(err.message).toBe('The idmWallet and createIdmWallet props are mutually exclusive and at least one must be provided');
+    }
+});
+
+it('should throw if neither idmWallet or createIdmWallet props were provided', () => {
+    hideGlobalErrors();
+
+    expect.assertions(1);
+
+    try {
+        render(<IdmWalletProvider />);
+    } catch (err) {
+        expect(err.message).toBe('The idmWallet and createIdmWallet props are mutually exclusive and at least one must be provided');
+    }
 });
 
 describe('sync mode', () => {

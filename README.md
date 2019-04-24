@@ -93,7 +93,7 @@ The `<IdmWalletProvider>` makes a IDM Wallet available to any nested components 
 
 Since any React component in an app can be connected, most applications will render a `<IdmWalletProvider>` at the top level, with the entire app's component tree inside of it. You can't use a connected component unless it is nested inside of a `<IdmWalletProvider>`.
 
-### Modes
+#### Modes
 
 There are two modes of operation: **sync** and **async**. The sync mode assumes that you take care of creating the IDM Wallet instance, which is an asynchronous operation, while the async mode does that for you and makes it part of the rendering.
 
@@ -237,7 +237,7 @@ Assumes that the wrapped component is a "pure" component and does not rely on an
 
 ### createIdmWalletObservable(idmWallet)
 
-Creates an observer able to watch changes of `idmWallet`. Those changes are captured by adding listeners to the `idmWallet`, such as `idmWallet.locker.onLockedChange(listener)`, and by wrapping functions that mutate underlying data or state, such as `idmWallet.locker.lock()`.
+Creates an observer with the ability to watch changes of `idmWallet`. Those changes are captured by adding listeners to the `idmWallet`, such as `idmWallet.locker.onLockedChange(listener)`, and by wrapping functions that mutate underlying data or state, such as `idmWallet.locker.lock()`.
 
 Note that the same observer will be returned for the same `idmWallet`.
 

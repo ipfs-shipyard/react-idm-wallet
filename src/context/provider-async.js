@@ -38,13 +38,13 @@ const IdmWalletProviderAsync = ({ createIdmWallet, provider: Provider, children 
         };
     }, [state.idmWallet]);
 
+    // Call the children render prop, only whenever the `status` or `error` changes
     const renderedChildren = useMemo(() => (
         children(state.status, state.error)
     ), [state.status, state.error]);
 
     // Call `createIdmWallet` on mount or whenever it changes
-    // Note that any inflight `.then` or `.catch` from the promise will be ignored
-    // if `createIdmWallet` changes
+    // Note that any inflight `.then` or `.catch` from the previous promise will be ignored
     useEffect(() => {
         let ignore = false;
 

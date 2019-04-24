@@ -71,7 +71,6 @@
     "idm-wallet": "^0.1.0"
   },
   "dependencies": {
-    "airbnb-prop-types": "^2.13.2",
     "hoist-non-react-statics": "^3.3.0",
     "invariant": "^2.2.4",
     "lodash": "^4.17.11",
