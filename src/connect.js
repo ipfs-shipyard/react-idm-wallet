@@ -5,10 +5,10 @@ import memoizeOne from 'memoize-one';
 import invariant from 'invariant';
 import IdmWalletContext from './context';
 
-const propsMapperEquatityFn = ([newOwnProps, newChangeId], [oldOwnProps, oldChangeId]) =>
+const propsMapperEqualityFn = ([newOwnProps, newChangeId], [oldOwnProps, oldChangeId]) =>
     newChangeId === oldChangeId && shallowEqual(newOwnProps, oldOwnProps);
 
-const propsMapperOptimizedEquatityFn = ([, newChangeId], [, oldChangeId]) =>
+const propsMapperOptimizedEqualityFn = ([, newChangeId], [, oldChangeId]) =>
     newChangeId === oldChangeId;
 
 const createPropsMapper = (createMapWalletToProps, idmWallet, options) => {
@@ -25,7 +25,7 @@ const createPropsMapper = (createMapWalletToProps, idmWallet, options) => {
     // When pure, return a memoized version of `propsMapper`
     // Note that we further optimize when `mapWalletToProps` does not depend on `ownProps`
     const dependsOnOwnProps = mapWalletToProps.length > 0;
-    const equalityFn = dependsOnOwnProps ? propsMapperEquatityFn : propsMapperOptimizedEquatityFn;
+    const equalityFn = dependsOnOwnProps ? propsMapperEqualityFn : propsMapperOptimizedEqualityFn;
 
     return memoizeOne(propsMapper, equalityFn);
 };
