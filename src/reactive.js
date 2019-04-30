@@ -1,5 +1,6 @@
 import { wrap, throttle } from 'lodash';
 import isPromise from 'p-is-promise';
+import Cancelable from 'cancel.it';
 
 const wrapAccessor = (obj, prop, modifierFn, cleanupFns) => {
     const alreadyModifiedSymbol = Symbol();
@@ -41,6 +42,8 @@ const wrapMutator = (obj, prop, changeFn, cleanupFns) => {
 
                 throw err;
             });
+
+            ret = Cancelable.from(ret);
         } else {
             changeFn();
         }
