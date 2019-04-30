@@ -1,15 +1,11 @@
 import React from 'react';
-import { render, cleanup } from 'react-testing-library';
+import { render } from 'react-testing-library';
 import pDelay from 'delay';
 import IdmWalletContext from '../src/context';
 import createObservable from '../src/observable';
 import createMockIdmWallet from './util/mock-idm-wallet';
 import hideGlobalErrors from './util/hide-global-errors';
 import { IdmWalletProvider } from '../src';
-
-beforeEach(() => {
-    cleanup();
-});
 
 it('should throw if both idmWallet and createIdmWallet props were provided', () => {
     hideGlobalErrors();

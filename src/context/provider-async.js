@@ -6,12 +6,11 @@ import createObservable from '../observable';
 const reducer = (state, action) => {
     switch (action.type) {
     case 'loading':
-        // Return the same status if already loading, to avoid an additional render
         return { ...state, status: 'loading' };
     case 'error':
-        return { ...state, status: 'error', error: action.payload, idmWallet: undefined };
+        return { status: 'error', error: action.payload, idmWallet: undefined };
     case 'ok':
-        return { ...state, status: 'ok', error: undefined, idmWallet: action.payload };
+        return { status: 'ok', error: undefined, idmWallet: action.payload };
     /* istanbul ignore next */
     default:
         throw new Error('Unknown action type');
@@ -41,7 +40,7 @@ const IdmWalletProviderAsync = ({ createIdmWallet, provider: Provider, children 
     // Call the children render prop, only whenever the `status` or `error` changes
     const renderedChildren = useMemo(() => (
         children(state.status, state.error)
-    ), [state.status, state.error]);
+    ), [children, state.status, state.error]);
 
     // Call `createIdmWallet` on mount or whenever it changes
     // Note that any inflight `.then` or `.catch` from the previous promise will be ignored
@@ -52,14 +51,9 @@ const IdmWalletProviderAsync = ({ createIdmWallet, provider: Provider, children 
 
         pTry(createIdmWallet)
         .then((idmWallet) => {
-            if (!ignore) {
-                dispatch({ type: 'ok', payload: idmWallet });
-            }
-        })
-        .catch((error) => {
-            if (!ignore) {
-                dispatch({ type: 'error', payload: error });
-            }
+            !ignore && dispatch({ type: 'ok', payload: idmWallet });
+        }, (err) => {
+            !ignore && dispatch({ type: 'error', payload: err });
         });
 
         return () => {

@@ -1,5 +1,5 @@
 import React, { Component, createRef, forwardRef } from 'react';
-import { render, cleanup } from 'react-testing-library';
+import { render } from 'react-testing-library';
 import testRenderer from 'react-test-renderer';
 import pDelay from 'delay';
 import IdmWalletContext from '../src/context';
@@ -10,10 +10,6 @@ import { spiedConnectIdmWallet, spiedForwardRef, spyOnCreateMapWalletToProps } f
 import createObservable from '../src/observable';
 
 const THROTTLE_WAIT_TIME = 10;
-
-beforeEach(() => {
-    cleanup();
-});
 
 it('should render all the correct components', () => {
     const idmWallet = createMockIdmWallet();
