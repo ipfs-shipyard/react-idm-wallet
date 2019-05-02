@@ -28,7 +28,6 @@ it('should render all the correct components', () => {
 
     expect(names).toEqual([
         'IdmWalletProvider',
-        'IdmWalletProviderSync',
         'ConnectIdmWallet(MyComponent)',
         'MyComponent',
         'p',

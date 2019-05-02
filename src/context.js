@@ -1,8 +1,11 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { createContext, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import createObservable from '../observable';
+import createObservable from './observable';
 
-const IdmWalletProviderSync = ({ idmWallet, provider: Provider, children }) => {
+const IdmWalletContext = createContext();
+const Provider = IdmWalletContext.Provider;
+
+const IdmWalletProvider = ({ idmWallet, children }) => {
     // Create observable each time the `idmWallet` changes
     const providerValue = useMemo(() => ({
         idmWallet,
@@ -20,10 +23,12 @@ const IdmWalletProviderSync = ({ idmWallet, provider: Provider, children }) => {
     );
 };
 
-IdmWalletProviderSync.propTypes = {
+IdmWalletProvider.propTypes = {
     idmWallet: PropTypes.object.isRequired,
-    provider: PropTypes.elementType.isRequired,
     children: PropTypes.node,
 };
 
-export default IdmWalletProviderSync;
+IdmWalletContext.Provider = IdmWalletProvider;
+IdmWalletContext.Consumer.Provider = IdmWalletProvider;
+
+export default IdmWalletContext;
