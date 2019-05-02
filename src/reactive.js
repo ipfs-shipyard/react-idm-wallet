@@ -33,17 +33,8 @@ const wrapMutator = (obj, prop, changeFn, cleanupFns) => {
         let ret = fn.apply(this, args); // eslint-disable-line babel/no-invalid-this
 
         if (isPromise(ret)) {
-            ret = ret.then((value) => {
-                changeFn();
-
-                return value;
-            }, (err) => {
-                changeFn();
-
-                throw err;
-            });
-
             ret = Cancelable.from(ret);
+            ret.then(() => changeFn(), () => changeFn());
         } else {
             changeFn();
         }
