@@ -71,6 +71,7 @@
     "idm-wallet": "^0.2.0"
   },
   "dependencies": {
+    "cancel.it": "^0.1.1",
     "hoist-non-react-statics": "^3.3.0",
     "invariant": "^2.2.4",
     "lodash": "^4.17.11",

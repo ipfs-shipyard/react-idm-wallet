@@ -128,7 +128,7 @@ ReactDOM.render(
 Type: `object`
 
 The [idmWallet](https://npmjs.org/package/idm-wallet) instance to use in your app.
-Internally, [`createIdmWalletObservable()`](#createidmwalletobservableidmwallet) will be used to observe changes to IDM Wallet's data or state.
+Internally, [`createIdmWalletObservable()`](#createidmwalletobservableidmwallet) will be used to observe changes to IDM Wallet's data.
 
 ##### children
 
@@ -138,7 +138,7 @@ What to render as the children.
 
 ### connectIdmWallet(createMapWalletToProps, [options])
 
-The `connectIdmWallet()` function connects a React component to a IDM Wallet instance, by providing the connected component with the pieces of the data or state and functions it needs from the IDM Wallet.
+The `connectIdmWallet()` function connects a React component to a IDM Wallet instance, by providing the connected component with the pieces of the data and functions it needs from the IDM Wallet.
 
 It does not modify the component class passed to it; instead, it returns a new, connected component that wraps the component you passed in. Moreover, any ref will be automatically forwarded to the component you passed in.
 
@@ -146,7 +146,7 @@ It does not modify the component class passed to it; instead, it returns a new, 
 
 Type: `function`
 
-A factory that creates a function that maps any data, state or mutators from a IDM Wallet to props that will be passed to the wrapped component. **From now on**, we will call the factory and the returned function **`createMapWalletToProps`** and **`mapWalletToProps`** respectively.
+A factory that creates a function that maps any data or functions from a IDM Wallet to props that will be passed to the wrapped component. **From now on**, we will call the factory and the returned function **`createMapWalletToProps`** and **`mapWalletToProps`** respectively.
 
 ```js
 const createMapWalletToProps = (idmWallet) => (ownProps) => ({});
@@ -154,9 +154,9 @@ const createMapWalletToProps = (idmWallet) => (ownProps) => ({});
 
 Your `createMapWalletToProps` will be called once per `idmWallet` instance, which usually does not change.
 
-If your `mapWalletToProps` function is declared with `ownProps`, it will be called whenever any data or state on the IDM Wallet changes or when the wrapper component receives new props (based on shallow equality comparisons). On the other hand, if the function is declared without any parameter, it will be called only whenever any data or state on the IDM Wallet changes.
+If your `mapWalletToProps` function is declared with `ownProps`, it will be called whenever any data on the IDM Wallet changes or when the wrapper component receives new props (based on shallow equality comparisons). On the other hand, if the function is declared without any parameter, it will be called only whenever any data on the IDM Wallet changes.
 
-All calls to mutators of the `idmWallet` must be bound, so that the correct `this` is used. This means that you will often wrap mutators in functions to keep them bounded. For that reason, it's **important to declare them in the factory** to avoid creating new functions everytime `mapWalletToProps` runs, thus avoiding unwanted re-renders:
+All calls to functions of the `idmWallet` must be bound, so that the correct `this` is used. This means that you will often wrap them to keep the binding. For that reason, it's **important to declare them in the factory** to avoid creating new functions everytime `mapWalletToProps` runs, thus avoiding unwanted re-renders:
 
 ```js
 // ❌ Incorrect: `onLock` prop will be new everytime
@@ -176,6 +176,14 @@ const createMapWalletToProps = (idmWallet) => {
 });
 ```
 
+##### promises
+
+Any mapped functions in `mapWalletToProps` that returns a promise will have a method called `.cancel()` in the promise itself. Calling this method will ignore the outcome of promise, causing it to never be resolved. This method should be called when unmounting your component and similar cenarios to guarantee unnecessary errors and side-effects, such as:
+
+> Warning: setState(…): Can only update a mounted or mounting component. This usually means you called setState() on an unmounted component.
+
+You may check [cancel.it](https://github.com/Eazymov/cancel.it) documentation to know more.
+
 #### options
 
 ##### options.pure
@@ -187,7 +195,7 @@ Assumes that the wrapped component is a "pure" component and does not rely on an
 
 ### createIdmWalletObservable(idmWallet)
 
-Creates an observer with the ability to watch changes of `idmWallet`. Those changes are captured by adding listeners to the `idmWallet`, such as `idmWallet.locker.onLockedChange(listener)`, and by wrapping functions that mutate underlying data or state, such as `idmWallet.locker.lock()`.
+Creates an observer with the ability to watch changes of `idmWallet`. Those changes are captured by adding listeners to the `idmWallet`, such as `idmWallet.locker.onLockedChange(listener)`, and by wrapping functions that mutate underlying data, such as `idmWallet.locker.lock()`.
 
 Note that the same observer will be returned for the same `idmWallet`.
 

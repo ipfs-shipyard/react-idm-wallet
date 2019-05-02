@@ -77,6 +77,24 @@ it('should wait for promises (rejected)', async () => {
     expect(onChange).toHaveBeenCalledTimes(1);
 });
 
+it('should add a cancel method to promises to mute them', async () => {
+    const idmWallet = createMockIdmWallet();
+    const onChange = jest.fn();
+
+    idmWallet.locker.idleTimer.restart = async () => {
+        await pDelay(50);
+        throw new Error('foo');
+    };
+    makeReactive(idmWallet, onChange);
+
+    const promise = idmWallet.locker.idleTimer.restart();
+
+    promise.cancel();
+
+    await pDelay(100);
+    expect(onChange).toHaveBeenCalledTimes(0);
+});
+
 describe('locker scope', () => {
     it('should wrap mutators', async () => {
         const idmWallet = createMockIdmWallet();
