@@ -33,26 +33,27 @@ This library is written in modern JavaScript and is published in both CommonJS a
 First, wrap your application in `<IdmWalletProvider>`:
 
 ```js
-import React, { Fragment } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import createIdmWallet from 'idm-wallet';
 import { IdmWalletProvider } from 'react-idm-wallet';
 import App from './App';
 
-// We are using async mode in this example, read more below
-ReactDOM.render(
-    <IdmWalletProvider createIdmWallet={ createIdmWallet }>
-        { (status, error) => (
-            <Fragment>
-            { status === 'loading' && <div>Creating wallet...</div> }
-            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
-            { status === 'ok' && <App /> }
-            </Fragment>
-        ) }
-    </IdmWalletProvider>,,
-    document.getElementById('root')
-);
+const renderApp = (idmWallet) => {
+    ReactDOM.render(
+        <IdmWalletProvider idmWallet={ idmWallet }>
+            <App />
+        </IdmWalletProvider>,
+        document.getElementById('root')
+    );
+};
+
+createIdmWallet()
+.then(renderApp)
+.catch((err) => console.error(err));
 ```
+
+If you would like to render a loader while the wallet is being created, you may use [`react-promise-status`](https://github.com/moxystudio/react-promise-status) to help you with that. You will find an example in the [`<IdmWalletProvider>`](#idmwalletprovider) API documentation.
 
 Then, you may use `connectIdmWallet` to connect a component to a IDM Wallet:
 
@@ -93,98 +94,47 @@ The `<IdmWalletProvider>` makes a IDM Wallet available to any nested components 
 
 Since any React component in an app can be connected, most applications will render a `<IdmWalletProvider>` at the top level, with the entire app's component tree inside of it. You can't use a connected component unless it is nested inside of a `<IdmWalletProvider>`.
 
-#### Modes
-
-There are two modes of operation: **sync** and **async**. The sync mode assumes that you take care of creating the IDM Wallet instance, which is an asynchronous operation, while the async mode does that for you and makes it part of the rendering.
-
-**Sync mode:**
-
-```js
-import React from 'react';
-import ReactDOM from 'react-dom';
-import createIdmWallet from 'idm-wallet';
-import { IdmWalletProvider } from 'react-idm-wallet';
-import App from './App';
-
-const renderApp = (idmWallet) => {
-    ReactDOM.render(
-        <IdmWalletProvider idmWallet={ idmWallet }>
-            <App />
-        </IdmWalletProvider>,
-        document.getElementById('root')
-    );
-};
-
-createIdmWallet()
-.then(renderApp)
-.catch((err) => console.error(err));
-```
-
-**Async mode:**
+Because the creation of the wallet via `createIdmWallet` is asynchronous, we recommend using  [`react-promise-status`](https://github.com/moxystudio/react-promise-status) to conditionally render a loader while creating, a error if the creation failed or the `<IdmWalletProvider>` if succeeded. Here's an example:
 
 ```js
 import React, { Fragment } from 'react';
 import ReactDOM from 'react-dom';
 import createIdmWallet from 'idm-wallet';
 import { IdmWalletProvider } from 'react-idm-wallet';
+import { PromiseStatus } from 'react-promise-status';
 import App from './App';
 
 ReactDOM.render(
-    <IdmWalletProvider createIdmWallet={ createIdmWallet }>
-        { (status, error) => (
-            <Fragment>
-            { status === 'loading' && <div>Creating wallet...</div> }
-            { status === 'error' && <div>Oops, unable to create wallet: { error.message }</div> }
-            { status === 'ok' && <App /> }
-            </Fragment>
-        ) }
-    </IdmWalletProvider>,
+    <PromiseStatus promise={ createIdmWallet() } delayMs={ 500 }>
+        { (status, value) => {
+            switch (status) {
+            case 'pending': return <div>Creating wallet...</div>;
+            case 'rejected': return <div>Oops, unable to create wallet: { value.message }</div>;
+            case 'fulfilled': return (
+                <IdmWalletProvider idmWallet={ value }>
+                    <App />
+                </IdmWalletProvider>
+            ) }
+        } }
+    </PromiseStatus>,
     document.getElementById('root')
 );
 ```
 
-The async mode leverages the [render props](https://reactjs.org/docs/render-props.html) technique to know what to render. The children render prop is invoked with the following signature:
-
-```js
-const render = (status, error) => ();
-```
-
-The `status` may be either `loading`, `error` or `ok`. When status is set to error, the `error` argument will contain the error object that was caught.
-
 #### Props
 
 ##### idmWallet
-
-ℹ️ Using this property will make the provider operate in sync mode.
 
 Type: `object`
 
 The [idmWallet](https://npmjs.org/package/idm-wallet) instance to use in your app.
 Internally, [`createIdmWalletObservable()`](#createidmwalletobservableidmwallet) will be used to observe changes to IDM Wallet's data or state.
 
-##### createIdmWallet
-
-Type: `function`
-
-ℹ️ Using this property will make the provider operate in async mode.
-
-A function that returns a promise for the IDM Wallet to use in your app.
-Internally, [`createIdmWalletObservable()`](#createidmwalletobservableidmwallet) will be used to observe changes to IDM Wallet's data or state.
-
-If you want to pass options when creating the IDM wallet, you may create a custom factory and use it as the `createIdmWallet` prop:
-
-```js
-const createIdmWalletWithOptions = () => createIdmWallet({ /* Your options */ });
-
-// ...
-<IdmWalletProvider createIdmWallet={ createIdmWalletWithOptions }>
-```
-
 ##### children
 
-Type: `Node` (any React's node), `Function`
+Type: `Node` (any React's node)
 
-What to render as the children. A React node is expected in sync mode while a function is expected in async mode.
+What to render as the children.
 
 ### connectIdmWallet(createMapWalletToProps, [options])
 
