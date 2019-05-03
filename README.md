@@ -53,7 +53,7 @@ createIdmWallet()
 .catch((err) => console.error(err));
 ```
 
-If you would like to render a loader while the wallet is being created, you may use [`react-promise-status`](https://github.com/moxystudio/react-promise-status) to help you with that. You will find an example in the [`<IdmWalletProvider>`](#idmwalletprovider) API documentation.
+If you would like to render a loader while the wallet is being created, you may use [`react-promiseful`](https://github.com/moxystudio/react-promiseful) to help you with that. You will find an example in the [`<IdmWalletProvider>`](#idmwalletprovider) API documentation.
 
 Then, you may use `connectIdmWallet` to connect a component to a IDM Wallet:
 
@@ -94,19 +94,19 @@ The `<IdmWalletProvider>` makes a IDM Wallet available to any nested components 
 
 Since any React component in an app can be connected, most applications will render a `<IdmWalletProvider>` at the top level, with the entire app's component tree inside of it. You can't use a connected component unless it is nested inside of a `<IdmWalletProvider>`.
 
-Because the creation of the wallet via `createIdmWallet` is asynchronous, we recommend using  [`react-promise-status`](https://github.com/moxystudio/react-promise-status) to conditionally render a loader while creating, a error if the creation failed or the `<IdmWalletProvider>` if succeeded. Here's an example:
+Because the creation of the wallet via `createIdmWallet` is asynchronous, we recommend using  [`react-promiseful`](https://github.com/moxystudio/react-promiseful) to conditionally render a loader while creating, a error if the creation failed or the `<IdmWalletProvider>` if succeeded. Here's an example:
 
 ```js
 import React, { Fragment } from 'react';
 import ReactDOM from 'react-dom';
 import createIdmWallet from 'idm-wallet';
 import { IdmWalletProvider } from 'react-idm-wallet';
-import { PromiseStatus } from 'react-promise-status';
+import { PromiseState } from 'react-promiseful';
 import App from './App';
 
 ReactDOM.render(
-    <PromiseStatus promise={ createIdmWallet() } delayMs={ 500 }>
-        { (status, value) => {
+    <PromiseState promise={ createIdmWallet() } delayMs={ 500 }>
+        { ({ status, value }) => {
             switch (status) {
             case 'pending': return <div>Creating wallet...</div>;
             case 'rejected': return <div>Oops, unable to create wallet: { value.message }</div>;
@@ -116,7 +116,7 @@ ReactDOM.render(
                 </IdmWalletProvider>
             ) }
         } }
-    </PromiseStatus>,
+    </PromiseState>,
     document.getElementById('root')
 );
 ```
