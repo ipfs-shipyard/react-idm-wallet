@@ -56,6 +56,8 @@ const makeReactive = (idmWallet, onChange) => {
 
     // Locker
     // ------------------------------
+    cleanupFns.push(idmWallet.locker.onLockedChange(changeFn));
+
     closuredWrapMutator(idmWallet.locker.idleTimer, 'setMaxTime', changeFn);
     closuredWrapMutator(idmWallet.locker.idleTimer, 'restart', changeFn);
 
@@ -64,7 +66,20 @@ const makeReactive = (idmWallet, onChange) => {
         closuredWrapMutator(lock, 'disable', changeFn);
     });
 
-    cleanupFns.push(idmWallet.locker.onLockedChange(changeFn));
+    // Identities
+    // ------------------------------
+    cleanupFns.push(idmWallet.identities.onChange(changeFn));
+
+    closuredWrapMutator(idmWallet.identities, 'load', changeFn);
+
+    closuredWrapAccessor(idmWallet.identities, 'get', (identity) => {
+        cleanupFns.push(identity.onRevoke(changeFn));
+
+        cleanupFns.push(identity.backup.onComplete(changeFn));
+        cleanupFns.push(identity.profile.onChange(changeFn));
+        cleanupFns.push(identity.devices.onChange(changeFn));
+        cleanupFns.push(identity.devices.onCurrentRevoke(changeFn));
+    });
 
     return () => {
         cleanupFns.forEach((fn) => fn());

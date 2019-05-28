@@ -32,8 +32,8 @@ it('should not throttle several spaced changes', async () => {
     ];
 
     await pEachSeries(fns, async (fn) => {
-        await pDelay(THROTTLE_WAIT_TIME * 2);
         await fn();
+        await pDelay(THROTTLE_WAIT_TIME * 2);
     });
 
     await pDelay(THROTTLE_WAIT_TIME);
@@ -110,11 +110,10 @@ describe('locker scope', () => {
         ];
 
         await pEachSeries(fns, async (fn) => {
-            await pDelay(THROTTLE_WAIT_TIME * 2);
             await fn();
+            await pDelay(THROTTLE_WAIT_TIME);
         });
 
-        await pDelay(THROTTLE_WAIT_TIME);
         expect(onChange).toHaveBeenCalledTimes(fns.length);
     });
 
@@ -124,12 +123,18 @@ describe('locker scope', () => {
 
         makeReactive(idmWallet, onChange);
 
-        expect(idmWallet.locker.onLockedChange).toHaveBeenCalledTimes(1);
+        const fns = [
+            idmWallet.locker.onLockedChange,
+        ];
 
-        idmWallet.locker.onLockedChange.mock.calls[0][0]();
+        await pEachSeries(fns, async (fn) => {
+            expect(fn).toHaveBeenCalledTimes(1);
 
-        await pDelay(THROTTLE_WAIT_TIME);
-        expect(onChange).toHaveBeenCalledTimes(1);
+            fn.mock.calls[0][0]();
+            await pDelay(THROTTLE_WAIT_TIME);
+        });
+
+        expect(onChange).toHaveBeenCalledTimes(fns.length);
     });
 
     it('should cleanup wrapped mutators', async () => {
@@ -165,15 +170,100 @@ describe('locker scope', () => {
 
         const cleanup = makeReactive(idmWallet, onChange);
 
-        idmWallet.locker.idleTimer.setMaxTime();
-        await pDelay(THROTTLE_WAIT_TIME);
+        cleanup();
+
+        const fns = [
+            idmWallet.locker.onLockedChange,
+        ];
+
+        fns.forEach((fn) => expect(fn.unsubscribe).toHaveBeenCalledTimes(1));
+    });
+});
+
+describe('identities scope', () => {
+    it('should wrap mutators', async () => {
+        const idmWallet = createMockIdmWallet();
+        const onChange = jest.fn();
+
+        makeReactive(idmWallet, onChange);
+
+        const fns = [
+            () => idmWallet.identities.load(),
+        ];
+
+        await pEachSeries(fns, async (fn) => {
+            await fn();
+            await pDelay(THROTTLE_WAIT_TIME);
+        });
+
+        expect(onChange).toHaveBeenCalledTimes(fns.length);
+    });
+
+    it('should add listeners', async () => {
+        const idmWallet = createMockIdmWallet();
+        const onChange = jest.fn();
+
+        makeReactive(idmWallet, onChange);
+
+        const identity = idmWallet.identities.get('foo');
+        const fns = [
+            idmWallet.identities.onChange,
+            identity.onRevoke,
+            identity.profile.onChange,
+            identity.devices.onChange,
+            identity.devices.onCurrentRevoke,
+            identity.backup.onComplete,
+        ];
+
+        await pEachSeries(fns, async (fn) => {
+            expect(fn).toHaveBeenCalledTimes(1);
+
+            fn.mock.calls[0][0]();
+            await pDelay(THROTTLE_WAIT_TIME);
+        });
+
+        expect(onChange).toHaveBeenCalledTimes(fns.length);
+    });
+
+    it('should cleanup wrapped mutators', async () => {
+        const idmWallet = createMockIdmWallet();
+        const onChange = jest.fn();
+
+        const originalLoad = idmWallet.identities.load;
+
+        const cleanup = makeReactive(idmWallet, onChange);
+
+        expect(idmWallet.identities.load).not.toBe(originalLoad);
 
         cleanup();
 
-        // Trigger mutation and check if `onChange` wasn't called again
-        idmWallet.locker.idleTimer.setMaxTime();
+        expect(idmWallet.identities.load).toBe(originalLoad);
+
+        // Trigger mutation and check if `onChange` wasn't called
+        idmWallet.identities.load();
 
         await pDelay(THROTTLE_WAIT_TIME);
-        expect(onChange).toHaveBeenCalledTimes(1);
+        expect(onChange).toHaveBeenCalledTimes(0);
+    });
+
+    it('should cleanup listeners', async () => {
+        const idmWallet = createMockIdmWallet();
+        const onChange = jest.fn();
+
+        const cleanup = makeReactive(idmWallet, onChange);
+        const identity = idmWallet.identities.get('foo');
+
+        cleanup();
+
+        const fns = [
+            idmWallet.identities.onChange,
+            identity.onRevoke,
+            identity.profile.onChange,
+            identity.devices.onChange,
+            identity.devices.onCurrentRevoke,
+            identity.backup.onComplete,
+        ];
+
+        fns.forEach((fn) => expect(fn.unsubscribe).toHaveBeenCalledTimes(1));
     });
 });
