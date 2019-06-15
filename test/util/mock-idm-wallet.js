@@ -13,8 +13,8 @@ const createLocker = () => {
     const getLock = (lockType) => {
         if (!locksMap.has(lockType)) {
             locksMap.set(lockType, {
-                enable: () => Promise.resolve(),
-                disable: () => Promise.resolve(),
+                enable: async () => {},
+                disable: async () => {},
             });
         }
 
@@ -24,7 +24,7 @@ const createLocker = () => {
     return {
         idleTimer: {
             getMaxTime: () => {},
-            setMaxTime: () => {},
+            setMaxTime: async () => {},
             restart: () => {},
         },
         masterLock: getLock('passphrase'),
@@ -41,7 +41,7 @@ const createIdentities = () => {
             identitiesMap.set(id, {
                 onRevoke: createSubscriber(),
                 backup: {
-                    onComplete: createSubscriber(),
+                    setComplete: async () => {},
                 },
                 profile: {
                     onChange: createSubscriber(),
@@ -50,6 +50,10 @@ const createIdentities = () => {
                     onChange: createSubscriber(),
                     onCurrentRevoke: createSubscriber(),
                 },
+                apps: {
+                    onChange: createSubscriber(),
+                    onLinkCurrentChange: createSubscriber(),
+                },
             });
         }
 
@@ -57,9 +61,9 @@ const createIdentities = () => {
     };
 
     return {
-        load: () => Promise.resolve(),
         get: getIdentitiy,
         onChange: createSubscriber(),
+        onLoad: createSubscriber(),
     };
 };
 

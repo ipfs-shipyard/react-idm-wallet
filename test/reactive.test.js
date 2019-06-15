@@ -158,7 +158,7 @@ describe('locker scope', () => {
         expect(idmWallet.locker.getLock('passphrase').enable).toBe(originalEnableLock);
 
         // Trigger mutation and check if `onChange` wasn't called
-        idmWallet.locker.idleTimer.setMaxTime();
+        await idmWallet.locker.idleTimer.setMaxTime();
 
         await pDelay(THROTTLE_WAIT_TIME);
         expect(onChange).toHaveBeenCalledTimes(0);
@@ -187,8 +187,9 @@ describe('identities scope', () => {
 
         makeReactive(idmWallet, onChange);
 
+        const identity = idmWallet.identities.get('foo');
         const fns = [
-            () => idmWallet.identities.load(),
+            () => identity.backup.setComplete(),
         ];
 
         await pEachSeries(fns, async (fn) => {
@@ -207,12 +208,14 @@ describe('identities scope', () => {
 
         const identity = idmWallet.identities.get('foo');
         const fns = [
+            idmWallet.identities.onLoad,
             idmWallet.identities.onChange,
             identity.onRevoke,
             identity.profile.onChange,
             identity.devices.onChange,
             identity.devices.onCurrentRevoke,
-            identity.backup.onComplete,
+            identity.apps.onChange,
+            identity.apps.onLinkCurrentChange,
         ];
 
         await pEachSeries(fns, async (fn) => {
@@ -229,18 +232,22 @@ describe('identities scope', () => {
         const idmWallet = createMockIdmWallet();
         const onChange = jest.fn();
 
-        const originalLoad = idmWallet.identities.load;
+        let identity = idmWallet.identities.get('foo');
+
+        const originalBackupSetComplete = identity.backup.setComplete;
 
         const cleanup = makeReactive(idmWallet, onChange);
 
-        expect(idmWallet.identities.load).not.toBe(originalLoad);
+        identity = idmWallet.identities.get('foo');
+
+        expect(identity.backup.setComplete).not.toBe(originalBackupSetComplete);
 
         cleanup();
 
-        expect(idmWallet.identities.load).toBe(originalLoad);
+        expect(identity.backup.setComplete).toBe(originalBackupSetComplete);
 
         // Trigger mutation and check if `onChange` wasn't called
-        idmWallet.identities.load();
+        await identity.backup.setComplete();
 
         await pDelay(THROTTLE_WAIT_TIME);
         expect(onChange).toHaveBeenCalledTimes(0);
@@ -256,12 +263,14 @@ describe('identities scope', () => {
         cleanup();
 
         const fns = [
+            idmWallet.identities.onLoad,
             idmWallet.identities.onChange,
             identity.onRevoke,
             identity.profile.onChange,
             identity.devices.onChange,
             identity.devices.onCurrentRevoke,
-            identity.backup.onComplete,
+            identity.apps.onChange,
+            identity.apps.onLinkCurrentChange,
         ];
 
         fns.forEach((fn) => expect(fn.unsubscribe).toHaveBeenCalledTimes(1));

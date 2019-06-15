@@ -68,17 +68,18 @@ const makeReactive = (idmWallet, onChange) => {
 
     // Identities
     // ------------------------------
+    cleanupFns.push(idmWallet.identities.onLoad(changeFn));
     cleanupFns.push(idmWallet.identities.onChange(changeFn));
 
-    closuredWrapMutator(idmWallet.identities, 'load', changeFn);
-
     closuredWrapAccessor(idmWallet.identities, 'get', (identity) => {
-        cleanupFns.push(identity.onRevoke(changeFn));
+        closuredWrapMutator(identity.backup, 'setComplete', changeFn);
 
-        cleanupFns.push(identity.backup.onComplete(changeFn));
+        cleanupFns.push(identity.onRevoke(changeFn));
         cleanupFns.push(identity.profile.onChange(changeFn));
         cleanupFns.push(identity.devices.onChange(changeFn));
         cleanupFns.push(identity.devices.onCurrentRevoke(changeFn));
+        cleanupFns.push(identity.apps.onChange(changeFn));
+        cleanupFns.push(identity.apps.onLinkCurrentChange(changeFn));
     });
 
     return () => {
