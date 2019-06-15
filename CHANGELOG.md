@@ -1,6 +1,20 @@
-# Change Log
+# Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## [0.3.0](https://github.com/ipfs-shipyard/react-idm-wallet/compare/v0.2.0...v0.3.0) (2019-06-15)
+
+
+### Features
+
+* add apps support ([cd39c4c](https://github.com/ipfs-shipyard/react-idm-wallet/commit/cd39c4c))
+
+
+### BREAKING CHANGES
+
+* requires idm-wallet@^0.4.0
+
+
 
 <a name="0.2.0"></a>
 # [0.2.0](https://github.com/ipfs-shipyard/react-idm-wallet/compare/v0.1.0...v0.2.0) (2019-05-28)
