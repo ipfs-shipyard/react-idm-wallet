@@ -1,6 +1,6 @@
 import pDelay from 'delay';
 import makeObservable from '../src/observable';
-import createMockIdmWallet from './util/mock-idm-wallet';
+import createMockIdmWallet from './utils/mock-idm-wallet';
 
 const THROTTLE_WAIT_TIME = 10;
 

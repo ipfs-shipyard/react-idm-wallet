@@ -4,9 +4,9 @@ import testRenderer from 'react-test-renderer';
 import pDelay from 'delay';
 import IdmWalletContext from '../src/context';
 import connectIdmWallet from '../src/connect';
-import createMockIdmWallet from './util/mock-idm-wallet';
-import hideGlobalErrors from './util/hide-global-errors';
-import { spiedConnectIdmWallet, spiedForwardRef, spyOnCreateMapWalletToProps } from './util/spy';
+import createMockIdmWallet from './utils/mock-idm-wallet';
+import hideGlobalErrors from './utils/hide-global-errors';
+import { spiedConnectIdmWallet, spiedForwardRef, spyOnCreateMapWalletToProps } from './utils/spy';
 import createObservable from '../src/observable';
 
 const THROTTLE_WAIT_TIME = 10;

@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from 'react-testing-library';
 import IdmWalletContext from '../src/context';
 import createObservable from '../src/observable';
-import createMockIdmWallet from './util/mock-idm-wallet';
+import createMockIdmWallet from './utils/mock-idm-wallet';
 
 it('should provide idmWallet and observable to consumers', () => {
     const idmWallet = createMockIdmWallet();

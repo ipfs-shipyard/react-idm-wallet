@@ -1,7 +1,7 @@
 import pDelay from 'delay';
 import pEachSeries from 'p-each-series';
 import makeReactive from '../src/reactive';
-import createMockIdmWallet from './util/mock-idm-wallet';
+import createMockIdmWallet from './utils/mock-idm-wallet';
 
 const THROTTLE_WAIT_TIME = 10;
 
