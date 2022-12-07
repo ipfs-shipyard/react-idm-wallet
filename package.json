@@ -93,7 +93,7 @@
     "eslint-config-moxy": "^7.1.0",
     "husky": "^2.1.0",
     "jest": "^24.5.0",
-    "lint-staged": "^8.1.4",
+    "lint-staged": "^13.1.0",
     "p-each-series": "^2.1.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
